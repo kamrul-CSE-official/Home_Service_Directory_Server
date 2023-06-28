@@ -18,4 +18,4 @@ app.listen(port, () => {
   console.log(`This server is running ${port}`);
 });
 
-//https://web.programming-hero.com/level2-batch-1/video/level2-batch-1-6-5-create-model-using-interface-schema-and-insert-data-
+//
