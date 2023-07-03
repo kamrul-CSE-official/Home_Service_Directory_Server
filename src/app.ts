@@ -10,9 +10,5 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/v1/user", userRouter);
-// app.get("/", (req: Request, res: Response, next: NextFunction) => {
-//   res.send("Bismillah");
-//   next();
-// });
 
 export default app;

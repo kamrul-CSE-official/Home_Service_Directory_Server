@@ -1,21 +1,20 @@
 import { connect } from "mongoose";
 import app from "./app";
-
-const port: number = 5000;
+import config from "./config";
 
 //Database connection
-const databaseConnection = async () => {
+const boostrap = async () => {
   try {
-    await connect("mongodb://127.0.0.1:27017/Home-Service-Directory");
+    await connect(config.database_url as string);
     console.log(`Database connection successful 😍`);
+
+    app.listen(config.port, () => {
+      console.log(`This server is running ${config.port}`);
+    });
   } catch (err) {
     console.log("Error to DB connection ", err);
   }
 };
-databaseConnection();
-
-app.listen(port, () => {
-  console.log(`This server is running ${port}`);
-});
+boostrap();
 
 //
