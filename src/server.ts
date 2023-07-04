@@ -16,5 +16,3 @@ const boostrap = async () => {
   }
 };
 boostrap();
-
-//
