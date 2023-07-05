@@ -1,10 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import {
-  createUserToDB,
-  getUsersFormDB,
-  getuserByIdFromDB,
-} from "./user.service";
-
+// import { createUserToDB, getUserFromDb,  getuserByIdFromDB,} from "./user.service";
+import { getUserFromDb } from "./user.service";
+/*
 export const createUser = async (
   req: Request,
   res: Response,
@@ -18,14 +15,16 @@ export const createUser = async (
     data: user,
   });
 };
-
+*/
 export const getUsers = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
+  console.log("getUsers call");
   // const users = await getUsersFormDB();
-  const users = { name: "MD.Kamrul Hasan", email: "Kamrul@gmail.com" };
+  const users = await getUserFromDb();
+  console.log("USERS: ", users);
 
   res.status(200).json({
     status: "success",
@@ -33,6 +32,7 @@ export const getUsers = async (
   });
 };
 
+/*
 export const getUserById = async (
   req: Request,
   res: Response,
@@ -46,3 +46,4 @@ export const getUserById = async (
     data: users,
   });
 };
+*/
