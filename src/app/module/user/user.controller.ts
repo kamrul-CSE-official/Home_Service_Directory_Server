@@ -24,7 +24,8 @@ export const getUsers = async (
   res: Response,
   next: NextFunction
 ) => {
-  const users = await getUsersFormDB();
+  // const users = await getUsersFormDB();
+  const users = { name: "MD.Kamrul Hasan", email: "Kamrul@gmail.com" };
 
   res.status(200).json({
     status: "success",
