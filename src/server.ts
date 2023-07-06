@@ -1,39 +1,40 @@
-import { MongoClient, MongoClientOptions, Db, Collection } from "mongodb";
-import app from "./app";
+import { MongoClient, ServerApiVersion } from "mongodb";
+import express, { Application, Request, Response } from "express";
+import cors from "cors";
 import config from "./config";
-import { getUserFromDbTest } from "./app/module/user/user.service";
 
-let db: Db;
-let collection: Collection;
+const app: Application = express();
 
-// Database connection
-const bootstrap = async () => {
-  try {
-    const options: MongoClientOptions = {
-      // Add any desired options here
-    };
+// middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-    const client = new MongoClient(config.database_url as string, options);
+const url = config.database_url;
+const client = new MongoClient(url as string, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  },
+});
 
-    await client.connect();
-    console.log("Database connected! 😍");
+client.connect((err) => {
+  if (err) {
+    console.log(err);
+  } else {
+    const usersDetails = client
+      .db("home-service-directory")
+      .collection("users");
 
-    db = client.db("home-service-directory"); // Specify the database name
-    collection = db.collection("users"); // Specify the collection name
-
-    const users = await collection.find().toArray();
-    console.log("USERS: ", users);
-
-    app.listen(config.port, () => {
-      console.log(`This application is running on port ${config.port} 🏃`);
+    app.get("/users", async (req: Request, res: Response) => {
+      const query = {};
+      const options = await usersDetails.find(query).toArray();
+      res.send(options);
     });
-
-    client.close();
-  } catch (err) {
-    console.log("Error connecting to the database:", err);
   }
-};
+});
 
-bootstrap();
-
-export { db, collection }; // Export the db and collection objects
+app.listen(config.port, () =>
+  console.log(`This application runing ${config.port}`)
+);

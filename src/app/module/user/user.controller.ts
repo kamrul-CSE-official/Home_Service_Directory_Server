@@ -21,14 +21,12 @@ export const getUsers = async (
   res: Response,
   next: NextFunction
 ) => {
-  console.log("getUsers call");
-  // const users = await getUsersFormDB();
-  const users = await getUserFromDb();
-  console.log("USERS: ", users);
+  const query = {};
+  // const options = await databaseAndCollections().usersDetails
 
   res.status(200).json({
     status: "success",
-    data: users,
+    // data: users,
   });
 };
 
