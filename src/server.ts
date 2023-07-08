@@ -29,6 +29,7 @@ client.connect((err) => {
     app.get("/users", async (req: Request, res: Response) => {
       const query = {};
       const options = await usersDetails.find(query).toArray();
+      console.log(options);
       res.send(options);
     });
   }
