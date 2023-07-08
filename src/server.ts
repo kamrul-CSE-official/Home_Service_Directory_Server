@@ -10,8 +10,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const url = config.database_url;
-const client = new MongoClient(url as string, {
+const client = new MongoClient(config.database_url as string, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
