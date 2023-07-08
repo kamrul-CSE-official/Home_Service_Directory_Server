@@ -28,15 +28,24 @@ async function run() {
           .db("home-service-directory")
           .collection("users");
 
+        const signUp = client.db("home-service-directory").collection("users");
+
         app.get("/users", async (req: Request, res: Response) => {
           const query = {};
           const options = await usersDetails.find(query).toArray();
-          console.log(options);
           res.send(options);
+        });
+
+        app.post("/signUp", async (req: Request, res: Response) => {
+          const signUpData = req.body;
+          console.log(signUpData);
+          const result = await signUp.insertOne(signUpData);
+          res.send(result);
         });
       }
     });
 
+    //Listen
     app.listen(config.port, () =>
       console.log(`This application runing ${config.port}`)
     );
