@@ -18,23 +18,30 @@ const client = new MongoClient(config.database_url as string, {
   },
 });
 
-client.connect((err) => {
-  if (err) {
-    console.log(err);
-  } else {
-    const usersDetails = client
-      .db("home-service-directory")
-      .collection("users");
+async function run() {
+  try {
+    client.connect((err) => {
+      if (err) {
+        console.log(err);
+      } else {
+        const usersDetails = client
+          .db("home-service-directory")
+          .collection("users");
 
-    app.get("/users", async (req: Request, res: Response) => {
-      const query = {};
-      const options = await usersDetails.find(query).toArray();
-      console.log(options);
-      res.send(options);
+        app.get("/users", async (req: Request, res: Response) => {
+          const query = {};
+          const options = await usersDetails.find(query).toArray();
+          console.log(options);
+          res.send(options);
+        });
+      }
     });
-  }
-});
 
-app.listen(config.port, () =>
-  console.log(`This application runing ${config.port}`)
-);
+    app.listen(config.port, () =>
+      console.log(`This application runing ${config.port}`)
+    );
+  } catch (error) {
+    console.log(error);
+  }
+}
+run();
