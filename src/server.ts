@@ -1,7 +1,7 @@
 import { MongoClient, ObjectID, ObjectId, ServerApiVersion } from "mongodb";
 import express, { Application, NextFunction, Request, Response } from "express";
-import http, { Server } from "http";
-import { Server as SocketServer, Socket } from "socket.io";
+// import http, { Server } from "http";
+// import { Server as SocketServer, Socket } from "socket.io";
 import * as admin from "firebase-admin";
 import * as serviceAccount from "../home-service-derectory-firebase-adminsdk-84yuo-9645810360.json";
 
@@ -146,9 +146,39 @@ async function run() {
 
 
     // Listen
-    app.listen(config.port, () =>
+    const server = app.listen(config.port, () =>
       console.log(`This application is running on port ${config.port}`)
     );
+
+
+    const io = require('socket.io')(server, {
+      pingTimeout: 60000,
+      cors: {
+        origin: 'http://localhost:5173',
+      }
+    })
+
+    io.on('connection', (socket) => {
+      console.log('connected to socket.io')
+
+      socket.on('setup', (userData) => {
+        socket.join(userData.id);
+        console.log(userData[0].id);
+        socket.emit('connected');
+      })
+
+      socket.on('join chat', (room) => {
+        socket.join(room);
+        console.log('user joined room: ' + room);
+      })
+
+    })
+
+
+
+
+
+
   } catch (error) {
     console.log(error);
   }
