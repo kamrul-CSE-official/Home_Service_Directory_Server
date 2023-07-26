@@ -1,4 +1,4 @@
-import { MongoClient, ObjectID, ObjectId, ServerApiVersion } from "mongodb";
+import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
 import express, { Application, NextFunction, Request, Response } from "express";
 // import http, { Server } from "http";
 // import { Server as SocketServer, Socket } from "socket.io";
@@ -65,6 +65,8 @@ async function run() {
       .collection("users");
 
     const usersCollection = client.db("home-service-directory").collection("users");
+    const userMassages = client.db("home-service-directory").collection("massage");
+
 
 
     app.get('/user', verifyToken, async (req: CustomRequest, res: Response) => {
@@ -102,6 +104,10 @@ async function run() {
         res.status(409).json({ message: 'User already exists.' });
       }
     });
+
+
+    //chat
+
 
 
 
@@ -150,6 +156,9 @@ async function run() {
       console.log(`This application is running on port ${config.port}`)
     );
 
+
+    //Chat
+    // https://www.youtube.com/watch?v=fH8VIb8exdA&ab_channel=RoadsideCoder
 
     const io = require('socket.io')(server, {
       pingTimeout: 60000,
