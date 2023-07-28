@@ -111,7 +111,9 @@ async function run() {
 
 
 
-    //server service
+
+
+    //server service put
     app.put('/serveService/:id', async (req: Request, res: Response) => {
       const id = req.params.id;
       const updateUser = req.body;
@@ -149,6 +151,58 @@ async function run() {
         res.status(500).json({ message: 'Error updating data.' });
       }
     });
+
+    //server service get
+    app.get('/serveService/:id', async (req: Request, res: Response) => {
+      const id = req.params.id;
+
+      try {
+        const query = { _id: new ObjectId(id.toString()) };
+
+        type UserProjection = {
+          [key: string]: 1 | 0;
+        };
+        const projection: UserProjection = {
+          firstName: 0,
+          lastName: 0,
+          email: 0,
+          photoURL: 0,
+          area: 1,
+          cover1: 1,
+          cover2: 1,
+          descriptionAboutYou: 1,
+          expecting1: 1,
+          expecting2: 1,
+          expecting3: 1,
+          expertise1: 1,
+          expertise2: 1,
+          expertise3: 1,
+          expertiseMain1: 1,
+          expertiseMain2: 1,
+          expertiseMain3: 1,
+          jobDescription: 1,
+          location: 1,
+          title: 1,
+        };
+
+        // Assuming you have the 'usersDetails' collection set up and properly typed
+        const user = await usersDetails.findOne(query, projection);
+
+        if (user) {
+          res.send(user);
+        } else {
+          res.status(404).json({ message: 'User not found.' });
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Error fetching user data.' });
+      }
+    });
+
+
+
+
+
 
 
     // Listen
