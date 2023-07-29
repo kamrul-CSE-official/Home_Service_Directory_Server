@@ -68,6 +68,22 @@ async function run() {
     const userMassages = client.db("home-service-directory").collection("massage");
 
 
+    //Validation with id
+    async function isValid(id: string) {
+      try {
+        const query = { _id: new ObjectId(id.toString()) };
+        const user = await usersDetails.findOne(query);
+        if (user?.email) {
+          return true;
+        } else {
+          return false;
+        }
+      } catch (error) {
+        return false;
+      }
+    }
+
+
 
     app.get('/user', verifyToken, async (req: CustomRequest, res: Response) => {
       const email = req.query.email as string;
@@ -83,9 +99,37 @@ async function run() {
 
     app.get("/users", async (req: Request, res: Response) => {
       const query = {};
-      const options = await usersDetails.find(query).toArray();
+      const options = await usersDetails.find(query).limit(3).toArray();
       res.send(options);
     });
+
+
+
+    // Recommended for you
+    app.get("/recommendedForYou", async (req: Request, res: Response) => {
+      const query = {
+        rating: {
+          $exists: true,
+          $ne: ""
+        },
+        $expr: { $gte: [{ $toDouble: "$rating" }, 4.20] }
+      };
+
+      const options = await usersDetails
+        .find(query).limit(10).toArray();
+
+      res.send(options);
+    });
+
+
+
+
+
+
+
+
+
+
 
     //SignUp
     app.post("/signUp", async (req: Request, res: Response) => {
@@ -118,7 +162,6 @@ async function run() {
       const id = req.params.id;
       const updateUser = req.body;
 
-      // Exclude the _id field from the updateUser object
       const { _id, ...updateData } = updateUser;
 
       const query = { _id: new ObjectId(id.toString()) };
@@ -129,7 +172,6 @@ async function run() {
       try {
         const user = await usersCollection.findOne(query, options);
         if (user?.email) {
-          // Merge the existing user data with the updateData
           const mergedData = { ...user, ...updateData };
 
           const updateResult = await usersCollection.updateOne(query, { $set: mergedData });
@@ -185,7 +227,6 @@ async function run() {
           title: 1,
         };
 
-        // Assuming you have the 'usersDetails' collection set up and properly typed
         const user = await usersDetails.findOne(query, projection);
 
         if (user) {
@@ -199,10 +240,18 @@ async function run() {
       }
     });
 
+    // update profile pic
+    app.put('/updatePP/:id', async (req, res) => {
+      const id = req.params.id;
+      const imageUrl = req.body.img; // Corrected to req.body.img
+      const query = { _id: new ObjectId(id.toString()) };
 
+      // Corrected syntax for $set operator
+      const updateResult = await usersCollection.updateOne(query, { $set: { photoURL: imageUrl } });
 
-
-
+      res.send(updateResult);
+      console.log(updateResult);
+    });
 
 
     // Listen
