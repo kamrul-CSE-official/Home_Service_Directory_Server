@@ -66,6 +66,7 @@ async function run() {
 
     const usersCollection = client.db("home-service-directory").collection("users");
     const userMassages = client.db("home-service-directory").collection("massage");
+    const userState = client.db("home-service-directory").collection("state");
 
 
     //Validation with id
@@ -197,14 +198,6 @@ async function run() {
 
 
 
-
-
-
-
-
-
-
-
     //SignUp
     app.post("/signUp", async (req: Request, res: Response) => {
       const userExistsQuery = { email: req.body.email };
@@ -225,6 +218,64 @@ async function run() {
 
 
     //chat
+    app.post('/chat', async (req, res) => {
+      try {
+        const { sender, recever, message, time, date } = req.body;
+        const chat = {
+          message: message,
+          time: time,
+          date: date,
+          send: sender
+        }
+
+        // Assuming 'userMassages' is your MongoDB collection
+        const query = { sender, recever };
+        const existingDocument = await userMassages.findOne(query);
+
+        if (!existingDocument) {
+          // If conversation doesn't exist, create a new one with the first message
+          const newConversation = {
+            sender,
+            recever,
+            message: [chat],
+          };
+          // Insert the new conversation into the collection
+          await userMassages.insertOne(newConversation);
+        } else {
+          // If conversation already exists, push the new message to the 'message' array
+          existingDocument.message.push(chat);
+
+          // Update the document with the new message
+          await userMassages.updateOne(query, { $set: { message: existingDocument.message } });
+        }
+
+        res.status(200).json({ message: 'New message added successfully' });
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'An error occurred' });
+      }
+    });
+
+    app.get('/chat', async (req, res) => {
+      try {
+        const { sender, recever } = req.query;
+
+        // Find chat messages where both sender and receiver match the provided IDs
+        const query = {
+          $or: [
+            { sender, recever },
+            { sender: recever, recever: sender },
+          ],
+        };
+
+        const chatMessages = await userMassages.find(query).toArray();
+        res.status(200).json(chatMessages);
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'An error occurred' });
+      }
+    });
+
 
 
 
