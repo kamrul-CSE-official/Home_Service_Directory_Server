@@ -107,19 +107,93 @@ async function run() {
 
     // Recommended for you
     app.get("/recommendedForYou", async (req: Request, res: Response) => {
-      const query = {
-        rating: {
-          $exists: true,
-          $ne: ""
-        },
-        $expr: { $gte: [{ $toDouble: "$rating" }, 4.20] }
-      };
+      try {
+        const pipeline = [
+          {
+            $match: {
+              rating: {
+                $exists: true,
+                $ne: "",
+              },
+              $expr: { $gte: [{ $toDouble: "$rating" }, 4.20] },
+              role: { $in: ['Electrician', 'Plumber', 'Landscaper', 'Cleaner'] },
+            },
+          },
+          {
+            $sample: { size: 10 },
+          },
+        ];
 
-      const options = await usersDetails
-        .find(query).limit(10).toArray();
+        const recommendedUsers = await usersDetails.aggregate(pipeline).toArray();
 
-      res.send(options);
+        res.send(recommendedUsers);
+      } catch (error) {
+        console.error("Error fetching recommended users:", error);
+        res.status(500).send("An error occurred while fetching recommended users.");
+      }
     });
+
+
+    // Most Popular Electrician
+    app.get("/mostPopularElectrician", async (req: Request, res: Response) => {
+      try {
+        const pipeline = [
+          {
+            $match: {
+              rating: {
+                $exists: true,
+                $ne: "",
+              },
+              $expr: { $gte: [{ $toDouble: "$rating" }, 4.50] },
+              role: { $in: ['Electrician'] },
+            },
+          },
+          {
+            $sample: { size: 10 },
+          },
+        ];
+
+        const recommendedUsers = await usersDetails.aggregate(pipeline).toArray();
+
+        res.send(recommendedUsers);
+      } catch (error) {
+        console.error("Error fetching recommended users:", error);
+        res.status(500).send("An error occurred while fetching recommended users.");
+      }
+    })
+
+    //You may like
+    app.get("/youMayLike", async (req: Request, res: Response) => {
+      try {
+        const pipeline = [
+          {
+            $match: {
+              rating: {
+                $exists: true,
+                $ne: "",
+              },
+              $expr: { $gte: [{ $toDouble: "$rating" }, 4.60] },
+              role: { $in: ['Electrician', 'Plumber', 'Landscaper', 'Cleaner'] },
+            },
+          },
+          {
+            $sample: { size: 8 },
+          },
+          {
+            $sort: { rating: -1 }, // Sort by 'rating' field in descending order
+          },
+        ];
+
+        const recommendedUsers = await usersDetails.aggregate(pipeline).toArray();
+
+        res.send(recommendedUsers);
+      } catch (error) {
+        console.error("Error fetching recommended users:", error);
+        res.status(500).send("An error occurred while fetching recommended users.");
+      }
+    });
+
+
 
 
 
