@@ -361,10 +361,10 @@ async function run() {
           const query = { _id: new ObjectId(id as string) };
 
           // Use generic version of findOne to specify the return type explicitly
-          const userInfo = await usersDetails.findOne<{ firstName: string; lastName: string; email: string; photoURL: string, id: string }>(query);
+          const userInfo = await usersDetails.findOne<{ firstName: string; lastName: string; email: string; photoURL: string, id: string, role: string }>(query);
 
           if (userInfo) {
-            const user = { name: `${userInfo.firstName} ${userInfo.lastName}`, photoURL: userInfo.photoURL, id: id };
+            const user = { name: `${userInfo.firstName} ${userInfo.lastName}`, photoURL: userInfo.photoURL, id: id, role: userInfo.role };
             return user;
             // res.json(user);
           } else {
@@ -437,6 +437,42 @@ async function run() {
     });
 
 
+    //get user name, img, id, role (primary data)
+    app.get('/getPrimaryInfo', async (req: Request, res: Response) => {
+      const { id } = req.query;
+      if (await isValid(id as string)) {
+        const result = await Connector(id as string);
+        res.send(result);
+      }
+
+    })
+
+    //get user all data throw id
+    app.get('/getUserAllData', async (req: Request, res: Response) => {
+      const { id } = req.query;
+
+      // Assuming isValid is a function that checks if the ID is valid
+      if (await isValid(id as string)) {
+        try {
+          const query = { _id: new ObjectId(id as string) };
+
+          // Assuming usersDetails is your MongoDB collection object
+          const userInfo = await usersDetails.findOne(query);
+
+          if (userInfo) {
+            res.send(userInfo);
+          } else {
+            res.status(404).send('User not found'); // User with given ID not found
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          res.status(500).send('Internal server error'); // Handle errors
+        }
+      } else {
+        res.status(400).send('Invalid ID'); // Bad request
+      }
+    });
+
 
 
 
@@ -444,7 +480,7 @@ async function run() {
 
 
     //server service put
-    app.put('/serveService/:id', async (req: Request, res: Response) => {
+    app.post('/serveService/:id', async (req: Request, res: Response) => {
       const id = req.params.id;
       const updateUser = req.body;
 
@@ -530,13 +566,22 @@ async function run() {
     app.put('/updatePP/:id', async (req, res) => {
       const id = req.params.id;
       const imageUrl = req.body.img; // Corrected to req.body.img
+      const cityName = req.body.cityOrVillage; // Corrected to req.body.img
       const query = { _id: new ObjectId(id.toString()) };
 
       // Corrected syntax for $set operator
-      const updateResult = await usersCollection.updateOne(query, { $set: { photoURL: imageUrl } });
+      if (imageUrl) {
+        const updateResult = await usersCollection.updateOne(query, { $set: { photoURL: imageUrl } });
+        res.send(updateResult);
+        console.log(updateResult);
+      }
+      if (cityName) {
+        const updateResult = await usersCollection.updateOne(query, { $set: { city: cityName } });
+        res.send(updateResult);
+        console.log(updateResult);
+      }
 
-      res.send(updateResult);
-      console.log(updateResult);
+
     });
 
 
