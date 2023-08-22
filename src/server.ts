@@ -478,6 +478,35 @@ async function run() {
 
 
 
+    //Serch
+    app.get('/search', (req, res) => {
+      const firstString = req.query.firstString;
+      const secondString = req.query.secondString;
+
+      usersCollection.aggregate([
+        {
+          $match: {
+            $and: [
+              { area: firstString },
+              { role: secondString }
+            ]
+          }
+        }
+      ]).toArray((err, result) => {
+        if (err) {
+          console.error('Error executing aggregation:', err);
+          res.status(500).json({ error: 'An error occurred while searching.' });
+          return;
+        }
+
+        res.json(result); // Send the filtered users as the response
+      });
+    });
+
+
+
+
+
 
     //server service put
     app.post('/serveService/:id', async (req: Request, res: Response) => {
