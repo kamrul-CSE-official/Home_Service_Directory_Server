@@ -67,6 +67,7 @@ async function run() {
     const usersCollection = client.db("home-service-directory").collection("users");
     const userMassages = client.db("home-service-directory").collection("massage");
     const userState = client.db("home-service-directory").collection("notification");
+    const appointmentCollection = client.db("home-service-directory").collection("appointmentCollection");
 
 
     //Validation with id
@@ -282,6 +283,20 @@ async function run() {
     });
 
 
+
+    // Take a appointment
+    app.post('/appointment', async (req: Request, res: Response) => {
+      try {
+        const appointmentData = req.body;
+
+        await appointmentCollection.insertOne(appointmentData);
+        res.status(200).json({ message: 'Appointment data received and saved successfully.' });
+
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'An error occurred' });
+      }
+    })
 
 
 
