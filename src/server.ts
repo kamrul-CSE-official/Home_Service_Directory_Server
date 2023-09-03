@@ -287,16 +287,53 @@ async function run() {
     // Take a appointment
     app.post('/appointment', async (req: Request, res: Response) => {
       try {
+        // Post into appointment table
         const appointmentData = req.body;
-
         await appointmentCollection.insertOne(appointmentData);
         res.status(200).json({ message: 'Appointment data received and saved successfully.' });
 
+        // Post into message table
+        const serviceHolderEmail = appointmentData.serviceHolderInfo.email;
+        const serviceProviderId = appointmentData.serviceProviderInfo.id;
+        const options = await usersDetails.find({ email: serviceHolderEmail }).toArray();
+
+        if (options.length > 0) {
+          const serviceHolderId = options[0]?.id;
+
+          const query = {
+            $or: [
+              { sender: serviceHolderId, recever: serviceProviderId },
+              { sender: serviceProviderId, recever: serviceHolderId }
+            ]
+          }
+          const existingDocument = await userMassages.findOne(query);
+
+          if (!existingDocument) {
+            const sender = serviceHolderId;
+            const recever = serviceProviderId;
+
+            const newAppointment = {
+              sender,
+              recever,
+              message: [appointmentData],
+            };
+
+            await userMassages.insertOne(newAppointment);
+
+          } else {
+            existingDocument.message.push(appointmentData);
+            await userMassages.updateOne(query, { $set: { message: existingDocument.message } });
+            console.log("Updated existing chat document.");
+          }
+        } else {
+          console.log("Service holder not found.");
+        }
       } catch (err) {
-        console.error(err);
+        console.error('An error occurred:', err);
         res.status(500).json({ message: 'An error occurred' });
       }
-    })
+    });
+
 
 
 
@@ -309,57 +346,65 @@ async function run() {
       try {
         const { sender, recever, message, time, date } = req.body;
         if (await isValid(sender) && await isValid(recever)) {
+          const query = {
+            $or: [
+              { sender: sender, recever: recever },
+              { sender: recever, recever: sender }
+            ]
+          }
+          const existingDocument = await userMassages.findOne(query);
+
           const chat = {
             message: message,
             time: time,
             date: date,
             send: sender
           }
-          // Assuming 'userMassages' is your MongoDB collection
-          const query = { sender, recever };
-          const existingDocument = await userMassages.findOne(query);
 
           if (!existingDocument) {
-            // If conversation doesn't exist, create a new one with the first message
+
             const newConversation = {
               sender,
               recever,
               message: [chat],
             };
-            // Insert the new conversation into the collection
             await userMassages.insertOne(newConversation);
-            massageState(sender, recever);
-
-          } else {
-            // If conversation already exists, push the new message to the 'message' array
+          } else if (existingDocument && !existingDocument.message) {
+            //appointment
+            existingDocument.message = [chat];
+            await userMassages.updateOne(query, { $set: existingDocument });
+          } else if (existingDocument.message) {
             existingDocument.message.push(chat);
-
-            // Update the document with the new message
             await userMassages.updateOne(query, { $set: { message: existingDocument.message } });
-            massageState(sender, recever);
           }
-          res.status(200).json({ message: 'New message added successfully' });
         }
-
       } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'An error occurred' });
       }
     });
+
+
+
     //Get single chat throw id's
     app.get('/chat', async (req: Request, res: Response) => {
       try {
         const { sender, recever } = req.query;
-        // Find chat messages where both sender and receiver match the provided IDs
-        const query = {
-          $or: [
-            { sender, recever },
-            { sender: recever, recever: sender },
-          ],
-        };
 
-        const chatMessages = await userMassages.find(query).toArray();
-        res.status(200).json(chatMessages);
+        if (await isValid(sender as string) && await isValid(recever as string)) {
+          const query = {
+            $or: [
+              { sender: sender, recever: recever },
+              { sender: recever, recever: sender }
+            ]
+          }
+          const existingDocument = await userMassages.findOne(query);
+          if (!existingDocument) {
+            res.status(500).json({ message: 'An error occurred' });
+          } else {
+            res.status(200).json(existingDocument);
+          }
+        }
       } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'An error occurred' });
@@ -403,7 +448,13 @@ async function run() {
         const userID = id as string;
 
         if (await isValid(userID)) {
-          const query = { $or: [{ sender: userID }, { receiver: userID }] };
+          const query = {
+            $or: [
+              { sender: userID },
+              { recever: userID }
+            ]
+          }
+
           const userChatMessages = await userMassages.find(query).toArray();
 
           let info: {
@@ -411,6 +462,7 @@ async function run() {
             photoURL: string;
             id: string;
           }[] = [];
+
 
           for (let i = 0; i < userChatMessages.length; i++) {
             if (userID !== userChatMessages[i]?.sender) {
@@ -421,7 +473,7 @@ async function run() {
               } | undefined = await Connector(userChatMessages[i]?.sender);
 
               if (data !== undefined) {
-                console.log(data);
+                // console.log(data);
                 info.push(data);
               }
             }
